@@ -1,0 +1,142 @@
+🟡 INTERMEDIATE
+
+Q: What is interactive rebase and why use it?
+
+git rebase -i HEAD~3
+
+Lets you edit, reorder, squash, or drop the last 3 commits before pushing. Example: you made 5 messy "wip", "fix typo", "actually fix it" commits — squash them into one clean commit before opening a PR, so reviewers see one logical change.
+
+Common actions in interactive rebase:
+
+pick – keep commit as-is
+squash/s – merge into previous commit
+reword/r – edit commit message
+drop/d – remove commit entirely
+
+Q: What is git blame?
+
+git blame filename.js
+
+Shows who last modified each line and in which commit. Example: a bug appears in checkout.js line 42 — blame tells you which commit (and teammate) introduced it, so you can ask context or check the related PR.
+
+Q: What are Git hooks?
+Scripts that run automatically at certain Git events, stored in .git/hooks/. Example: a pre-commit hook that runs a linter and blocks the commit if code style fails — catches issues before they even reach a PR.
+
+Q: How do you create a Git alias?
+
+git config --global alias.co checkout
+git config --global alias.st status
+
+Example: git co main instead of git checkout main — small time-saver used constantly across a team.
+
+Q: What is git rm vs deleting a file manually?
+
+git rm filename.js
+
+Deletes the file AND stages the deletion in one step. Deleting manually via file explorer still requires git add afterward to stage the removal.
+
+Q: How do you rename/move a file with Git tracking it?
+
+git mv old-name.js new-name.js
+
+Example: renaming utils.js to helpers.js — this keeps the rename tracked cleanly in history instead of showing as a delete + new file.
+
+Q: What's git fetch --prune?
+
+git fetch --prune
+
+Removes local references to remote branches that have been deleted on the server. Example: after 10 feature branches get merged and deleted on GitHub, your local git branch -r still shows them until you prune.
+
+Q: What is a detached HEAD state?
+When you check out a specific commit (not a branch), HEAD points directly to that commit instead of a branch. Example: git checkout a1b2c3d to inspect old code — any new commits made here aren't attached to a branch and can get lost unless you create a branch from that point (git checkout -b hotfix-old).
+
+🔴 ADVANCED
+
+Q: What is git rebase --onto?
+Used to move a range of commits to a new base, skipping unwanted ones. Example: your feature branch was accidentally based on another unfinished feature branch instead of main — git rebase --onto main old-feature my-feature replays only your commits directly onto main.
+
+Q: What is git worktree?
+
+git worktree add ../hotfix-dir hotfix-branch
+
+Lets you check out multiple branches into separate folders simultaneously from one repo. Example: you're mid-way through a big feature and need to urgently fix a production bug — instead of stashing everything, you open a second working folder for the hotfix branch and keep both running side by side.
+
+Q: What are Git submodules?
+
+git submodule add https://github.com/org/shared-lib.git libs/shared
+
+Lets you include another Git repo as a subdirectory, tracked at a specific commit. Example: multiple internal projects share a common UI component library — instead of copy-pasting it, each project references it as a submodule pinned to a tested version.
+
+Q: What is git subtree and how is it different from submodules?
+Subtree merges another repo's content directly into your repo's history (no separate .git reference needed), unlike submodules which just point to a commit. Generally simpler for consumers, more complex to set up.
+
+Q: What are Git objects internally (blob, tree, commit)?
+
+Blob – raw file content
+Tree – a folder structure, listing blobs/trees
+Commit – a snapshot pointing to a tree, plus metadata (author, message, parent commit)
+
+Example: understanding this explains why renaming a file with identical content doesn't create a new blob — Git deduplicates by content hash (SHA-1).
+
+Q: What is git gc and git prune?
+
+git gc
+git prune
+
+gc (garbage collect) compresses and optimizes the repo's object database; prune removes unreachable objects (e.g., from old resets). Example: a repo with years of history and lots of old branches starts feeling slow — git gc cleans it up.
+
+Q: How do you sign commits with GPG?
+
+git commit -S -m "message"
+git config --global commit.gpgsign true
+
+Example: in security-sensitive orgs, signed commits prove the commit really came from that developer's verified key, shown as "Verified" on GitHub.
+
+Q: What is git format-patch / applying patches?
+
+git format-patch -1 <commit-hash>
+git apply patch-file.patch
+
+Exports a commit as a .patch file that can be emailed or applied elsewhere. Example: contributing to an open-source project without push access — generate a patch and share it instead of a PR.
+
+Q: What is sparse-checkout?
+
+git sparse-checkout init --cone
+git sparse-checkout set folder1 folder2
+
+Lets you check out only specific folders of a massive monorepo instead of the whole thing. Example: a company monorepo has 40 services — a frontend dev only needs apps/web and libs/shared-ui, not the other 38 backend services.
+
+Q: What is Git LFS (Large File Storage)?
+An extension for versioning large binary files (videos, PSDs, datasets) efficiently, storing pointers in Git and actual files separately. Example: a game dev repo with large texture assets uses LFS so git clone doesn't download gigabytes of binary history every time.
+
+Q: What's the difference between git merge --squash and a regular merge?
+
+git merge --squash feature/login
+
+Combines all commits from the feature branch into a single set of staged changes (you commit manually), with no merge commit and no individual commit history preserved. Example: a feature branch had 20 messy WIP commits — squash merging into main keeps main's history to one clean commit.
+
+Q: Advanced scenario — how do you split one commit into multiple?
+
+git rebase -i <commit>~1
+# mark commit as 'edit'
+git reset HEAD~1
+git add <file1>
+git commit -m "first part"
+git add <file2>
+git commit -m "second part"
+git rebase --continue
+
+Example: you committed both a bug fix and an unrelated refactor together — splitting keeps history clean and makes each commit revertable independently.
+
+Q: Advanced scenario — how do you remove a sensitive file (like a leaked API key) from entire Git history?
+
+git filter-repo --path secrets.env --invert-paths
+
+(or the older git filter-branch / BFG Repo-Cleaner). Example: an .env file with AWS credentials was committed 6 months ago — deleting it now isn't enough since it's still in history; you must rewrite history and force-push, then rotate the leaked credentials immediately.
+
+Q: What is git bisect run for automated bug hunting?
+
+git bisect start
+git bisect bad
+git bisect good v1.0
+git bisect run npm test
